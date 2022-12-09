@@ -15,6 +15,7 @@ The steps are not taken all at once (head moves by 4 to right) but instead one s
 
 # horizontal, vertical offset from starting position
 positionsOccupied = ["0,0"]
+knotPositions = [[0,0] for i in range(10)]
 headPos = [0,0]
 tailPos = [0,0]
 
@@ -47,36 +48,63 @@ def calculateTailPos(tailPos, headPos):
                 tailPos[0] = headPos[0] - 1
             elif tailOffset[0] < -1:
                 tailPos[0] = headPos[0] + 1
-            tailPos[1] = headPos[1] # not 100% sure, but on the dimension where they're only 1 unit afar they should get on the same row/col
+            if abs(tailOffset[1]) == 1:
+                tailPos[1] = headPos[1] # not 100% sure, but on the dimension where they're only 1 unit afar they should get on the same row/col
+            elif tailOffset[1] > 1:
+                tailPos[1] = headPos[1]-1
+            elif tailOffset[1] < -1:
+                tailPos[1] = headPos[1]+1
+            else:
+                print("We should never get here")
         elif abs(tailOffset[1]) > 1: # they're vertically apart by more than 1
             # diagonal move to be made here
             if tailOffset[1] > 1: # head to above tail by more than 1, put tail 1 below head
                 tailPos[1] = headPos[1] - 1
             elif tailOffset[1] < -1: # head below tail by more than 1
                 tailPos[1] = headPos[1] + 1
-            tailPos[0] = headPos[0] # not 100% sure, but on the dimension where they're only 1 unit afar they should get on the same row/col
+            if abs(tailOffset[0]) == 1:
+                tailPos[0] = headPos[0] # not 100% sure, but on the dimension where they're only 1 unit afar they should get on the same row/col
+            elif tailOffset[0] > 1:
+                tailPos[0] = headPos[0]-1
+            elif tailOffset[0] < -1:
+                tailPos[0] = headPos[0]+1
+            else:
+                print("We should never get here")
         else: # they should be apart by more than 1 row and more than 1 column, with only 1 move of the head this should never be possible
             print("Something went wrong, tail is more than 1 row and 1 col away from head")
         
 
     return tailPos
 
+debug = True
 with open("input.txt", "r") as f:
     for line in f:
         line = line.strip()
         direction, steps = line.split(" ")
         steps = int(steps)
+        if debug:
+            print(f"command: {line}")
         for i in range(steps):
             if direction == "R":
-                headPos = [headPos[0]+1, headPos[1]]
+                knotPositions[0] = [knotPositions[0][0]+1, knotPositions[0][1]]
             elif direction == "L":
-                headPos = [headPos[0]-1, headPos[1]]
+                knotPositions[0] = [knotPositions[0][0]-1, knotPositions[0][1]]
             elif direction == "D":
-                headPos = [headPos[0], headPos[1]-1]
+                knotPositions[0] = [knotPositions[0][0], knotPositions[0][1]-1]
             else:
-                headPos = [headPos[0], headPos[1]+1]
-            tailPos = calculateTailPos(tailPos, headPos)
-            serializedTailPos = serializePosition(tailPos)
+                knotPositions[0] = [knotPositions[0][0], knotPositions[0][1]+1]
+            for i in range(9):
+                knotPositions[i+1] = calculateTailPos(knotPositions[i+1], knotPositions[i])
+
+            serializedTailPos = serializePosition(knotPositions[9])
             if serializedTailPos not in positionsOccupied:
                 positionsOccupied.append(serializedTailPos)
+        prevPos = [-1, -1]
+        if debug:
+            for i in range(10):
+                knot = knotPositions[i]
+                if knot[0] != prevPos[0] or knot[1] != prevPos[1]:
+                    print(f"Knot {i}: [{knot[0]}, {knot[1]}]")
+                    prevPos = knot
+            print("======================================")
     print(len(positionsOccupied))
